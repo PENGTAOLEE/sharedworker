@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="utils.js"></script>
+    <title>数据添加</title>
+    <style>
+      label {
+        display: inline-block;
+        width: 50px;
+      }
+    </style>
+  </head>
+  <body>
+    <form>
+      <div>
+        <label for="key">id: </label>
+        <input type="number" id="key" value="0">
+      </div>
+      <div>
+        <label for="user">name: </label>
+        <input type="text" id="user" value="0">
+      </div>
+      <div>
+        <label for="order">order: </label>
+        <input type="number" id="order" value="0">
+      </div>
+    </form>
+    <button>提交</button>
+
+    </div>
+    <script type="text/javascript">
+      var key = document.querySelector('#key');
+      var user = document.querySelector('#user');
+      var order = document.querySelector('#order');
+      var btn = document.querySelector('button');
+
+      if (!!window.SharedWorker) {
+        var worker = new SharedWorker("worker.js");
+        worker.port.postMessage({event:'init',target:'a'})
+        worker.port.start();
+
+        btn.addEventListener('click',function(e){
+          // worker.port.postMessage({id:key.value,name:user.value,order:order.value});
+          worker.port.postMessage({event: 'update', data: {id: key.value, name: user.value, order: order.value}});
+          // 存储到客户端
+          saveData();
+          console.log('Message posted to worker');
+        },false);
+      } else {
+        alert('you brower cant run')
+        btn.addEventListener('click',function(e){
+          channel.post('update', {id: key.value, name: user.value, order: order.value});
+          saveData();
+        },false);
+        
+      }
+
+      // 保存数据到本地浏览器
+      function saveData() {
+        var isExist = false;
+        var indexExist;
+        var LocalDataObj = localStorage.getItem('LocalDataJson');
+
+        LocalDataObj ? (LocalDataObj = JSON.parse(LocalDataObj)) : LocalDataObj=[];
+        LocalDataObj.forEach(function(item,index){
+          if (item.id == key.value) {
+            isExist = true;
+            indexExist = index;
+          }
+        })
+        
+        if (isExist) {
+          var obj = {id:key.value,name:user.value,order:order.value};
+          LocalDataObj[indexExist] = obj;
+        } else {
+          LocalDataObj.push({id:key.value,name:user.value,order:order.value})
+        }
+        
+        var LocalDataJson = JSON.stringify(LocalDataObj);
+        localStorage.setItem('LocalDataJson',LocalDataJson)
+      }
+    </script>
+  </body>
+</html>

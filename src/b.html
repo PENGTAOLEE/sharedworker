@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script src="utils.js"></script>
+  <title>同步页面</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    table {
+      margin-top: 40px;
+    }
+
+    td {
+      text-align: center;
+    }
+
+    .highlight {
+      background: peru;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+      <form>
+        <div>
+          <h4>输入框输入文字，表格内部匹配name字段并高亮显示</h4>
+          <label for="search">搜索：</label>
+          <input type="text" palceholder="请输入搜索内容" id="search" v-model="inputText" v-on:input="doSearch">
+        </div>
+      </form>
+      <table width="100%" border="1" cellspacing="0" cellpadding="0">
+        <thead>
+          <tr>
+            <th>id</th>
+            <th>name</th>
+            <th>order</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(item,index) in dataArr" :class="{'highlight':item.ishighlight}">
+            <td>{{item.id}}</td>
+            <td>{{item.name}}</td>
+            <td>{{item.order}}</td>
+          </tr>
+        </tbody>
+      </table>
+  </div>
+
+  <script>
+    var vm = new Vue({
+      el: '#app',
+      data: {
+        a: 'lpt',
+        inputText: "",
+        timer: null,
+        dataArr: [
+          {
+            id: 1,
+            name: 2,
+            order:3
+          },{
+            id: 22,
+            name: 244,
+            order:356
+          },
+        ]
+      },
+      components: {},
+      created: function() {
+        this.dataArr = JSON.parse(localStorage.getItem('LocalDataJson'))
+      },
+      mounted: function() {
+        var _this = this;
+        if (!!window.SharedWorker) {
+          var worker = new SharedWorker("worker.js")
+          worker.port.postMessage({event:'init',target:'b'})
+          worker.port.start();
+          // clearInterval(this.timer)
+          // this.timer = setInterval(function(){
+          //   worker.port.postMessage('get');
+          // },1000)
+
+          // 监听worker数据
+          worker.port.onmessage = function(e) {
+            _this.updateData(e.data.data);
+            // 更新数据 会删除当前搜索高亮class 【bug fix】
+            _this.doSearch();
+          }
+        } else {
+          //alert('you brower cant run SharedWorker')
+          channel.on('update', function(data) {
+            _this.updateData(data);
+            _this.doSearch();
+          });
+        }
+      },
+      methods: {
+        // 执行搜索事件
+        doSearch: function() {
+          var text = this.inputText;
+          var reg = new RegExp(text,'ig');
+          this.dataArr.forEach(function(item,index){
+            // INSIDE && INDEX
+            item.ishighlight = false;
+            if( text && item.name.toString().match(reg)) {
+              item.ishighlight = true;
+            }
+          })
+        },
+
+        // worker更新数据
+        updateData: function(data) {
+          var isExist = false;
+          var indexExist;
+          // 初始化页面  若果数据为空 会报错【bug fix 】
+          if (!this.dataArr) {
+            this.dataArr = [];
+          }
+          this.dataArr.forEach(function(item,index){
+            if (item.id == data.id) {
+              isExist = true;
+              indexExist = index;
+            }
+          })
+          if (isExist) {
+            // 不更新数据？
+            this.dataArr.splice(indexExist, 1, data);
+          } else {
+            this.dataArr.push(data)
+          }
+        }
+      },
+    })
+
+  </script>
+</body>
+</html>
