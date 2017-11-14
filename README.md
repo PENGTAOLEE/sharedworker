@@ -1,4 +1,4 @@
-## 一道面试过程中遇到的需求
+## 面试过程中遇到的一个需求
 
 ### 启动服务
 
@@ -9,5 +9,5 @@
 > node server.js
 
 
-浏览器输入 [http://localhost:8000/a.html]: <http://localhost:8000/a.html>  "http://localhost:8000/a.html", 打开a.html页面；以相同方式打开b.html.
+浏览器输入 [http://localhost:8000/a.html](http://localhost:8000/a.html) , 打开a.html页面；以相同方式打开b.html.
 
